@@ -103,8 +103,8 @@ pipeline = Pipeline([
 import os
 if not os.path.exists('model_artifacts'):
     os.makedirs('model_artifacts')
-
-joblib.dump(pipeline, 'model_artifacts/protein_rmsd_model.pkl')
+    # บันทึกไฟล์แบบบีบอัดระดับ 3 (สมดุลระหว่างความเร็วและขนาดไฟล์)
+joblib.dump(pipeline, 'model_artifacts/protein_rmsd_model.pkl', compress=3)
 
 # 3. บันทึกค่า Median และ Metadata อื่นๆ ลง JSON
 metadata = {

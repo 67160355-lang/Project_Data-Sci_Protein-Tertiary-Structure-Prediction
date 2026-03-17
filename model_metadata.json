@@ -1,0 +1,11 @@
+{
+    "model_type": "Random Forest Regressor",
+    "features": [
+        "F9",
+        "F6",
+        "F1",
+        "F3"
+    ],
+    "median_rmsd": 5.092,
+    "r2_score": 0.4274983933685901
+}

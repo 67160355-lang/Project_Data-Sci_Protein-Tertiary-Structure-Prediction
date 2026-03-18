@@ -4,66 +4,60 @@ import joblib
 import json
 import os
 from sklearn.model_selection import train_test_split
-from sklearn.ensemble import RandomForestRegressor
+from sklearn.ensemble import RandomForestClassifier
 from sklearn.preprocessing import StandardScaler
 from sklearn.pipeline import Pipeline
 
 # 1. โหลดข้อมูล
 df = pd.read_csv('protein_no_duplicates-2.csv')
 
-# 2. เตรียม Feature (X) และ Target (y)
-features = ['F9', 'F6', 'F1', 'F3']
+# 2. เตรียม Feature (X) และสร้าง Target (y) สำหรับ Classification
+# เกณฑ์: RMSD < 5 ให้เป็น 0, RMSD >= 5 ให้เป็น 1
+features = ['F3', 'F4', 'F2', 'F9']
 X = df[features]
-y_reg = df['RMSD']
-median_val = y_reg.median()
+y_class = np.where(df['RMSD'] < 5, 0, 1)
 
 # 3. แบ่งข้อมูล
-X_train, X_test, y_train, y_test = train_test_split(X, y_reg, test_size=0.2, random_state=42)
+X_train, X_test, y_train, y_test = train_test_split(X, y_class, test_size=0.2, random_state=42)
 
-# 4. สร้าง Model ที่ถูกจำกัดขนาด (เพื่อให้ไฟล์เล็กกว่า 25MB)
-# ปรับ n_estimators และ max_depth เพื่อคุมขนาดไฟล์
-reg_model = RandomForestRegressor(
-    n_estimators=50,       # ลดจำนวนต้นไม้เหลือ 50 ต้น
-    max_depth=10,          # จำกัดความลึกไม่เกิน 10 ชั้น
-    min_samples_leaf=10,   # เพิ่มค่านี้เพื่อให้กิ่งก้านน้อยลง ไฟล์จะเล็กลงมาก
+# 4. สร้าง Model Classifier ที่ถูกจำกัดขนาด
+clf_model = RandomForestClassifier(
+    n_estimators=50,       # จำนวนต้นไม้
+    max_depth=10,          # จำกัดความลึก
+    min_samples_leaf=10,   
     random_state=42,
     n_jobs=-1
 )
 
-# 5. สร้าง Pipeline (รวม Scaler และ Model เข้าด้วยกัน)
+# 5. สร้าง Pipeline (รวม Scaler และ Model)
 pipeline = Pipeline([
     ('scaler', StandardScaler()),
-    ('regressor', reg_model)
+    ('classifier', clf_model)
 ])
 
 # 6. เทรนโมเดล
-print("กำลังเทรนโมเดล... กรุณารอครู่หนึ่ง")
+print("กำลังเทรนโมเดล Classification... กรุณารอครู่หนึ่ง")
 pipeline.fit(X_train, y_train)
 
 # 7. บันทึกโมเดลและ Metadata
 if not os.path.exists('model_artifacts'):
     os.makedirs('model_artifacts')
 
-# บันทึก Pipeline ด้วยการบีบอัดสูงสุด (compress=9)
 model_path = 'model_artifacts/protein_rmsd_model.pkl'
 joblib.dump(pipeline, model_path, compress=9)
 
-# บันทึก Metadata
+# บันทึก Metadata เพื่อบอก App ว่าเราใช้ Threshold ที่เท่าไหร่
 metadata = {
-    "model_type": "Random Forest Regressor (Optimized Size)",
+    "model_type": "Random Forest Classifier",
     "features": features,
-    "median_rmsd": float(median_val)
+    "threshold": 5.0,
+    "classes": ["Group 0 (RMSD < 5)", "Group 1 (RMSD >= 5)"]
 }
-with open('model_metadata.json', 'w') as f:
+with open('model_artifacts/model_metadata.json', 'w') as f:
     json.dump(metadata, f)
 
-# ตรวจสอบขนาดไฟล์หลังบันทึก
-file_size = os.path.getsize(model_path) / (1024 * 1024) # แปลงเป็น MB
+# ตรวจสอบขนาดไฟล์
+file_size = os.path.getsize(model_path) / (1024 * 1024)
 print(f"\n--- เสร็จเรียบร้อย ---")
-print(f"ไฟล์โมเดลถูกบันทึกที่: {model_path}")
+print(f"ไฟล์โมเดล (Classifier) ถูกบันทึกที่: {model_path}")
 print(f"ขนาดไฟล์โมเดล: {file_size:.2f} MB")
-
-if file_size > 25:
-    print("⚠️ คำเตือน: ไฟล์ยังใหญ่เกิน 25MB ลองลด n_estimators หรือ max_depth ลงอีก")
-else:
-    print("✅ เยี่ยม! ไฟล์มีขนาดเหมาะสมสำหรับอัปโหลดแล้ว")

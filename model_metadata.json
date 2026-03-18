@@ -1,0 +1,1 @@
+{"model_type": "Random Forest Classifier", "features": ["F3", "F4", "F2", "F9"], "threshold": 5.0, "classes": ["Group 0 (RMSD < 5)", "Group 1 (RMSD >= 5)"]}

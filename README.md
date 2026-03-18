@@ -1,57 +1,50 @@
-Protein Tertiary Structure Prediction
-การทำนายโครงสร้างตติยภูมิของโปรตีนจากคุณสมบัติทางเคมีกายภาพ
- Introduction & Background
-โปรตีนเป็นองค์ประกอบพื้นฐานที่สำคัญของสิ่งมีชีวิต โดยโครงสร้างสามมิติ (Tertiary Structure) คือตัวกำหนดหน้าที่ (Function) การทำงานของโปรตีนนั้นๆ โปรตีนแต่ละชนิดจะมีลักษณะที่แตกต่างกันออกไป แต่สิ่งมีชีวิตทุกชนิดล้วนมีโปรตีน
+วัตถุประสงค์ใหม่ (Revised Objective)
+เพื่อสร้างแบบจำลอง Machine Learning แบบ Classification สำหรับจำแนกคุณภาพของโครงสร้างโปรตีนออกเป็น 2 กลุ่ม (Binary Classification) ตามระดับความคลาดเคลื่อนทางโครงสร้าง (RMSD) เพื่อช่วยให้นักวิจัยคัดกรองโครงสร้างโปรตีนที่มีความแม่นยำสูงได้อย่างรวดเร็ว
 
-โดยปกติแล้ว การหาโครงสร้างที่แม่นยำมักทำในห้องปฏิบัติการ (เช่น X-ray Crystallography หรือ NMR) ซึ่งมีข้อจำกัดคือ:
+2. การนิยามกลุ่มเป้าหมาย (Target Classes)
+แทนที่จะทำนายค่าตัวเลขตรงๆ เราจะเปลี่ยนค่า RMSD ให้เป็นหมวดหมู่ดังนี้:
 
-ใช้เวลานาน อาจใช้เวลาหลายเดือนหรือเป็นปีต่อหนึ่งโครงสร้าง
+Class 0 (High Quality): ค่า RMSD<5 หมายถึงโครงสร้างมีความใกล้เคียงกับธรรมชาติสูง
 
-ค่าใช้จ่ายสูง ต้องใช้อุปกรณ์และสารเคมีที่มีราคาสูงซึ่งทำให้บุคคลธรรมดาส่วนใหญ่ในประเทศไทยไม่สามารถเข้าถึงได้
+Class 1 (Low Quality): ค่า RMSD≥5 หมายถึงโครงสร้างมีความคลาดเคลื่อนสูง
 
-ความซับซ้อน โปรตีนบางชนิดจัดเตรียมรูปผลึกได้ยากทำให้เกิดความยุ่งยากเสียเวลา
+3. คุณลักษณะที่ใช้ในการทำนาย (Selected Features)
+จากการวิเคราะห์เบื้องต้น เราเลือกใช้ 4 ปัจจัยหลักที่มีผลต่อความเสถียรของโครงสร้าง:
 
-การนำ Machine Learning มาใช้จึงเป็นทางเลือกที่มีประสิทธิภาพสูง ช่วยในการทำนายคุณสมบัติโครงสร้างได้อย่างรวดเร็ว แม่นยำ และประหยัดทรัพยากรเป็นอย่างมาก
+F3: สัดส่วนพื้นที่ผิวไม่ชอบน้ำเมื่อเทียบกับพื้นที่ทั้งหมด
 
- Project Objective
-เพื่อสร้างแบบจำลอง Machine Learning (Regression Model) ที่สามารถทำนายค่า RMSD (Root Mean Square Deviation) ของโครงสร้างโปรตีน โดยอาศัยคุณสมบัติทางเคมีกายภาพ (Physicochemical Properties) เพื่อลดขั้นตอนและเวลาในการทดลองทางชีววิทยา
+F4: พื้นที่ผิวส่วนที่ชอบน้ำ (Polar residue) ที่สัมผัสกับสิ่งแวดล้อม
 
- Dataset Description
-ข้อมูลประกอบด้วยคุณสมบัติทางกายภาพของโปรตีน (Features) และค่าความเบี่ยงเบนของโครงสร้าง (Target)
+F2: พื้นที่ผิวส่วนที่ไม่ชอบน้ำ (Non-polar) ที่สัมผัสกับสิ่งแวดล้อม
 
-Target Variable
-RMSD (Root Mean Square Deviation): ค่าที่ใช้ระบุความแตกต่างระหว่างโครงสร้างที่ทำนายกับโครงสร้างจริง ยิ่งค่า RMSD ต่ำ แสดงว่าโครงสร้างมีความใกล้เคียงกับธรรมชาติมากเท่านั้น
+F9: น้ำหนักโมเลกุลโดยรวม
 
-Features (F1 - F9)
-Feature	ชื่อเต็ม	คำอธิบาย
-F1	Total surface area	พื้นที่ผิวทั้งหมดของโปรตีน
-F2	Non polar exposure area	พื้นที่ผิวส่วนที่ไม่ชอบน้ำ (Non-polar) ที่สัมผัสกับสิ่งแวดล้อม
-F3	Fractional area of non polar exposure	สัดส่วนพื้นที่ผิวไม่ชอบน้ำเมื่อเทียบกับพื้นที่ทั้งหมด
-F4	Area of polar residue exposure	พื้นที่ผิวส่วนที่ชอบน้ำ (Polar residue) ที่สัมผัสกับสิ่งแวดล้อม
-F5	Fractional area of polar residue exposure	สัดส่วนพื้นที่ผิวชอบน้ำเมื่อเทียบกับพื้นที่ทั้งหมด
-F6	Exposed area of residue with non polar side chain	พื้นที่ผิวสัมผัสของเรซิดิวที่มีสายโซ่ข้างไม่ชอบน้ำ
-F7	Fractional area of residue with non polar side chain	สัดส่วนพื้นที่ผิวของเรซิดิวที่มีสายโซ่ข้างไม่ชอบน้ำ
-F8	Number of non-polar residues	จำนวนเรซิดิวที่ไม่ชอบน้ำทั้งหมดในสายโซ่
-F9	Molecular weight	น้ำหนักโมเลกุลโดยรวม (หรือความลึกโดยเฉลี่ยของเรซิดิว)
- Model & Methodology
-โปรเจกต์นี้เลือกใช้
+🛠 การเปลี่ยนแปลงในส่วน Model & Methodology
+อัลกอริทึม (Algorithm)
+เปลี่ยนจาก RandomForestRegressor เป็น RandomForestClassifier เพื่อให้โมเดลเรียนรู้การแบ่งเส้นเขตแดน (Decision Boundary) ระหว่างกลุ่มคุณภาพดีและคุณภาพต่ำ
 
-Algorithm: RandomForestRegressor
+การวัดผล (Evaluation Metrics)
+จากเดิมที่ใช้ค่าความคลาดเคลื่อน (MSE/MAE) จะเปลี่ยนมาใช้:
 
-Preprocessing: StandardScaler (การทำ Feature Scaling)
+Accuracy: ความแม่นยำรวมในการจำแนกกลุ่ม
 
-Pipeline: รวมขั้นตอนการ Scale และการ Train เข้าด้วยกันเพื่อป้องกัน Data Leakage
+Probability Score: ค่าความมั่นใจของโมเดล (0-100%) ในการตัดสินใจเลือกกลุ่มนั้นๆ
 
-Optimization: จำกัดความลึกของต้นไม้ (max_depth=10) และจำนวนต้นไม้ (n_estimators=50) เพื่อให้โมเดลมีขนาดกะทัดรัดและทำงานได้รวดเร็ว
-
-  How to Use
-เตรียมข้อมูล: ตรวจสอบให้มั่นใจว่ามีไฟล์ protein_no_duplicates-2.csv
-
-ติดตั้ง Library: ```bash
-pip install pandas numpy scikit-learn joblib
-
-Train Model: รันไฟล์ Python เพื่อสร้างไฟล์โมเดล
+💻 ขั้นตอนการใช้งานใหม่ (Updated Execution)
+1. การเตรียมสภาพแวดล้อม
+ติดตั้ง Library เพิ่มเติมสำหรับแสดงผลกราฟความมั่นใจ:
 
 Bash
-python random_forest.py
-Artifacts: คุณจะได้ไฟล์ model_artifacts/protein_rmsd_model.pkl สำหรับนำไปใช้งานต่อ
+pip install pandas numpy scikit-learn joblib streamlit matplotlib
+2. การสร้างโมเดล (Train Model)
+รันไฟล์ Python ที่ปรับปรุงแล้วเพื่อแปลงข้อมูล RMSD เป็น Class 0 และ 1:
+
+Bash
+python3 random_forest.py
+ระบบจะสร้างไฟล์ protein_rmsd_model.pkl ในรูปแบบ Classifier ให้โดยอัตโนมัติ
+
+3. การใช้งานผ่านเว็บแอปพลิเคชัน
+รันคำสั่งเพื่อเปิดระบบวิเคราะห์ที่มีกราฟแท่งแสดงผลความน่าจะเป็น (Probability):
+
+Bash
+streamlit run app.py
